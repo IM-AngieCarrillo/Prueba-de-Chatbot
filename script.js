@@ -5,8 +5,8 @@ const sendBtn = document.getElementById("send-btn");
 window.onload = () => {
     const savedChat = localStorage.getItem("chatHistory");
     
-    // Limpia errores antiguos que hayan quedado guardados en el historial
-    if (savedChat && (savedChat.includes("Quota exceeded") || savedChat.includes("is not found") || savedChat.includes("Error al conectar"))) {
+    // Limpia errores viejos si existían en el almacenamiento
+    if (savedChat && (savedChat.includes("Quota exceeded") || savedChat.includes("is not found") || savedChat.includes("no está respondiendo") || savedChat.includes("Error de conexión"))) {
         localStorage.removeItem("chatHistory");
     } else if (savedChat) {
         chatBox.innerHTML = savedChat;
@@ -33,24 +33,41 @@ function showTyping() {
 }
 
 async function getBotReplay(userMessage) {
-    // Usamos encodeURIComponent para convertir los espacios y caracteres del mensaje
-    const prompt = encodeURIComponent(userMessage);
-    const url = `https://text.pollinations.ai/${prompt}?system=Eres+un+asistente+virtual+amigable+y+conciso.`;
-
+    // Intento 1: Servidor Pollinations
     try {
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            return "El servidor de la IA no está respondiendo en este momento.";
+        const prompt = encodeURIComponent(userMessage);
+        const urlPrimary = `https://text.pollinations.ai/${prompt}?system=Eres+un+asistente+virtual+amigable+y+conciso.`;
+        
+        const response = await fetch(urlPrimary);
+        if (response.ok) {
+            const replyText = await response.text();
+            if (replyText && replyText.trim() !== "") {
+                return replyText;
+            }
         }
-
-        const replyText = await response.text();
-        return replyText || "No pude obtener una respuesta.";
-
-    } catch (error) {
-        console.error("Fetch Error:", error);
-        return "Error de conexión con el servidor.";
+    } catch (e) {
+        console.warn("Servidor principal no disponible, intentando respaldo...", e);
     }
+
+    // Intento 2: Servidor de respaldo en caso de que el primero falle
+    try {
+        const urlBackup = "https://backend.buildt.ai/api/generate"; // Endpoint de respaldo ligero público
+        const responseBackup = await fetch(urlBackup, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: userMessage })
+        });
+
+        if (responseBackup.ok) {
+            const data = await responseBackup.json();
+            return data.response || data.text || "Respuesta recibida correctamente.";
+        }
+    } catch (e) {
+        console.error("Error en servidor de respaldo:", e);
+    }
+
+    // Si ambos fallan o hay un problema momentáneo de red local
+    return "No se pudo conectar con el servidor en este momento. Intenta de nuevo en unos segundos.";
 }
 
 sendBtn.onclick = async () => {
