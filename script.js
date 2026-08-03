@@ -29,7 +29,8 @@ function showTyping() {
 }
 
 async function getBotReplay(userMessage) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // CAMBIO AQUÍ: Usamos gemini-3.5-flash (o gemini-2.0-flash según el que soporte tu proyecto activo)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
 
     try {
         const response = await fetch(url, {
@@ -44,11 +45,11 @@ async function getBotReplay(userMessage) {
 
         if (!response.ok) {
             console.error("API Error:", data);
-            return data?.error?.message || "Error buscando respuesta."
+            return data?.error?.message || "Error fething response."
         }
 
         return (
-            data.candidates?.[0]?.content?.parts?.[0]?.text || "Lo siento, no comprendí el mensaje."
+            data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get that."
         )
     } catch (error) {
 
