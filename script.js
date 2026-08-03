@@ -30,8 +30,8 @@ function showTyping() {
 }
 
 async function getBotReplay(userMessage) {
-    // Usamos el endpoint oficial de gemini-1.5-flash
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Usamos gemini-2.5-flash en la versión v1beta de la API
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     try {
         const response = await fetch(url, {
@@ -46,16 +46,15 @@ async function getBotReplay(userMessage) {
 
         if (!response.ok) {
             console.error("API Error:", data);
-            // Si el modelo 1.5 parpadea, intentamos una respuesta amigable
-            return data?.error?.message || "Error al obtener respuesta de la API.";
+            return data?.error?.message || "Error fetching response.";
         }
 
         return (
-            data.candidates?.[0]?.content?.parts?.[0]?.text || "No pude entender el mensaje."
+            data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get that."
         );
     } catch (error) {
         console.error("Fetch Error:", error);
-        return "Error conectando con la API.";
+        return "Error connecting to the API.";
     }
 }
 
