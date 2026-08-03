@@ -5,8 +5,8 @@ const sendBtn = document.getElementById("send-btn");
 window.onload = () => {
     const savedChat = localStorage.getItem("chatHistory");
     
-    // Limpia errores viejos si existían en el almacenamiento
-    if (savedChat && (savedChat.includes("Quota exceeded") || savedChat.includes("is not found") || savedChat.includes("no está respondiendo") || savedChat.includes("Error de conexión"))) {
+    // Limpia automáticamente los errores pasados para renovar la interfaz
+    if (savedChat && (savedChat.includes("Quota exceeded") || savedChat.includes("Error") || savedChat.includes("No se pudo conectar"))) {
         localStorage.removeItem("chatHistory");
     } else if (savedChat) {
         chatBox.innerHTML = savedChat;
@@ -33,41 +33,28 @@ function showTyping() {
 }
 
 async function getBotReplay(userMessage) {
-    // Intento 1: Servidor Pollinations
-    try {
-        const prompt = encodeURIComponent(userMessage);
-        const urlPrimary = `https://text.pollinations.ai/${prompt}?system=Eres+un+asistente+virtual+amigable+y+conciso.`;
-        
-        const response = await fetch(urlPrimary);
-        if (response.ok) {
-            const replyText = await response.text();
-            if (replyText && replyText.trim() !== "") {
-                return replyText;
-            }
-        }
-    } catch (e) {
-        console.warn("Servidor principal no disponible, intentando respaldo...", e);
-    }
+    // Endpoint compatible con HTTPS para GitHub Pages
+    const url = `https://text.pollinations.ai/${encodeURIComponent(userMessage)}?model=openai`;
 
-    // Intento 2: Servidor de respaldo en caso de que el primero falle
     try {
-        const urlBackup = "https://backend.buildt.ai/api/generate"; // Endpoint de respaldo ligero público
-        const responseBackup = await fetch(urlBackup, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: userMessage })
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "Accept": "text/plain"
+            }
         });
 
-        if (responseBackup.ok) {
-            const data = await responseBackup.json();
-            return data.response || data.text || "Respuesta recibida correctamente.";
+        if (!response.ok) {
+            throw new Error(`HTTP Status: ${response.status}`);
         }
-    } catch (e) {
-        console.error("Error en servidor de respaldo:", e);
-    }
 
-    // Si ambos fallan o hay un problema momentáneo de red local
-    return "No se pudo conectar con el servidor en este momento. Intenta de nuevo en unos segundos.";
+        const replyText = await response.text();
+        return replyText || "No se recibió respuesta del modelo.";
+
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        return "Error al conectar con la IA desde GitHub Pages. Revisa tu conexión.";
+    }
 }
 
 sendBtn.onclick = async () => {
