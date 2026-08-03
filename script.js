@@ -7,7 +7,14 @@ const sendBtn = document.getElementById("send-btn");
 window.onload = () => {
     const savedChat = localStorage.getItem("chatHistory");
     console.log({savedChat});
-    if (savedChat) chatBox.innerHTML = savedChat;
+    
+    // Si el chat guardado tiene el error de "no longer available", no lo cargamos
+    if (savedChat && !savedChat.includes("no longer available")) {
+        chatBox.innerHTML = savedChat;
+    } else {
+        localStorage.removeItem("chatHistory");
+    }
+    
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
@@ -29,8 +36,8 @@ function showTyping() {
 }
 
 async function getBotReplay(userMessage) {
-    // CAMBIO AQUÍ: Usamos gemini-3.5-flash (o gemini-2.0-flash según el que soporte tu proyecto activo)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+    // Modelo Gemini 2.0 Flash activo
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     try {
         const response = await fetch(url, {
@@ -45,14 +52,15 @@ async function getBotReplay(userMessage) {
 
         if (!response.ok) {
             console.error("API Error:", data);
-            return data?.error?.message || "Error fething response."
+            return data?.error?.message || "Error fetching response."
         }
 
         return (
             data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get that."
         )
     } catch (error) {
-
+        console.error("Catch Error:", error);
+        return "Error de conexión.";
     }
 }
 
