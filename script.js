@@ -1,3 +1,5 @@
+import { apiKey } from "./config.js";
+
 const chatBox = document.getElementById("chat-box");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
@@ -5,8 +7,8 @@ const sendBtn = document.getElementById("send-btn");
 window.onload = () => {
     const savedChat = localStorage.getItem("chatHistory");
     
-    // Limpia automáticamente los errores pasados para renovar la interfaz
-    if (savedChat && (savedChat.includes("Quota exceeded") || savedChat.includes("Error") || savedChat.includes("No se pudo conectar"))) {
+    // Limpia errores pasados guardados en la memoria
+    if (savedChat && (savedChat.includes("Error") || savedChat.includes("Quota") || savedChat.includes("No se pudo"))) {
         localStorage.removeItem("chatHistory");
     } else if (savedChat) {
         chatBox.innerHTML = savedChat;
@@ -33,27 +35,36 @@ function showTyping() {
 }
 
 async function getBotReplay(userMessage) {
-    // Endpoint compatible con HTTPS para GitHub Pages
-    const url = `https://text.pollinations.ai/${encodeURIComponent(userMessage)}?model=openai`;
+    // Endpoint oficial con soporte CORS completo para HTTPS en GitHub Pages
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     try {
         const response = await fetch(url, {
-            method: "GET",
+            method: "POST",
             headers: {
-                "Accept": "text/plain"
-            }
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        parts: [{ text: userMessage }]
+                    }
+                ]
+            })
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-            throw new Error(`HTTP Status: ${response.status}`);
+            console.error("API Error Details:", data);
+            return data?.error?.message || "Ocurrió un error en la respuesta de la API.";
         }
 
-        const replyText = await response.text();
-        return replyText || "No se recibió respuesta del modelo.";
+        return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No se recibió respuesta.";
 
     } catch (error) {
         console.error("Fetch Error:", error);
-        return "Error al conectar con la IA desde GitHub Pages. Revisa tu conexión.";
+        return "Error de red al conectar con el servidor.";
     }
 }
 
