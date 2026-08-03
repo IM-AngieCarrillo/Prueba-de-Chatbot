@@ -44,11 +44,11 @@ async function getBotReplay(userMessage) {
 
         if (!response.ok) {
             console.error("API Error:", data);
-            return data?.error?.message || "Error fething response."
+            return data?.error?.message || "Error buscando respuesta."
         }
 
         return (
-            data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get that."
+            data.candidates?.[0]?.content?.parts?.[0]?.text || "Lo siento, no comprendí el mensaje."
         )
     } catch (error) {
 
