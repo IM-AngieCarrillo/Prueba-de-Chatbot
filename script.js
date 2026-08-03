@@ -5,10 +5,13 @@ const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 
 window.onload = () => {
+    // Si la pantalla se quedó atorada con un mensaje de error anterior, esto la limpia:
     const savedChat = localStorage.getItem("chatHistory");
-    console.log({savedChat});
-
-    if (savedChat) chatBox.innerHTML = savedChat;
+    if (savedChat && savedChat.includes("is no longer available") || savedChat && savedChat.includes("is not found")) {
+        localStorage.removeItem("chatHistory");
+    } else if (savedChat) {
+        chatBox.innerHTML = savedChat;
+    }
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
@@ -30,7 +33,8 @@ function showTyping() {
 }
 
 async function getBotReplay(userMessage) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Endpoint oficial actualizado con gemini-2.0-flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     try {
         const response = await fetch(url, {
@@ -45,15 +49,15 @@ async function getBotReplay(userMessage) {
 
         if (!response.ok) {
             console.error("API Error:", data);
-            return data?.error?.message || "Error fetching response.";
+            return data?.error?.message || "Error al obtener respuesta de la API.";
         }
 
         return (
-            data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get that."
+            data.candidates?.[0]?.content?.parts?.[0]?.text || "No pude obtener una respuesta."
         );
     } catch (error) {
         console.error("Fetch Error:", error);
-        return "Error connecting to the API.";
+        return "Error de conexión con la API.";
     }
 }
 
