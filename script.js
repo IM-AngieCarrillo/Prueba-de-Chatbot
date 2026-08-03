@@ -5,8 +5,8 @@ const sendBtn = document.getElementById("send-btn");
 window.onload = () => {
     const savedChat = localStorage.getItem("chatHistory");
     
-    // Limpia errores viejos si existían
-    if (savedChat && (savedChat.includes("Quota exceeded") || savedChat.includes("is not found"))) {
+    // Limpia errores antiguos que hayan quedado guardados en el historial
+    if (savedChat && (savedChat.includes("Quota exceeded") || savedChat.includes("is not found") || savedChat.includes("Error al conectar"))) {
         localStorage.removeItem("chatHistory");
     } else if (savedChat) {
         chatBox.innerHTML = savedChat;
@@ -33,23 +33,15 @@ function showTyping() {
 }
 
 async function getBotReplay(userMessage) {
-    const url = "https://text.pollinations.ai/";
+    // Usamos encodeURIComponent para convertir los espacios y caracteres del mensaje
+    const prompt = encodeURIComponent(userMessage);
+    const url = `https://text.pollinations.ai/${prompt}?system=Eres+un+asistente+virtual+amigable+y+conciso.`;
 
     try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                messages: [
-                    { role: "system", content: "Eres un asistente virtual amigable y conciso." },
-                    { role: "user", content: userMessage }
-                ],
-                model: "openai"
-            })
-        });
+        const response = await fetch(url);
 
         if (!response.ok) {
-            return "Error al conectar con el servidor de la IA.";
+            return "El servidor de la IA no está respondiendo en este momento.";
         }
 
         const replyText = await response.text();
